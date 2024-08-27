@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>フルーツゲーム</title>
+    <style>
+        #gameCanvas {
+            border: 1px solid yellow;  /* 枠を黄色に設定 */
+            background-color: lightblue;  /* 背景色を設定 */
+            display: block;
+            margin: 0 auto;
+            position: relative;  /* 雲を配置するための相対位置 */
+        }
+        #score {
+            text-align: center;
+            font-size: 24px;
+        }
+        #ready {
+            text-align: center;
+            font-size: 36px;
+            display: none;
+        }
+        #controls {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            background-color: #ddd;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="ready">Ready!</div>
+    <div id="score">スコア: 0</div>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <div id="controls">
+        <div id="left" class="button">左</div>
+        <div id="right" class="button">右</div>
+        <div id="drop" class="button">落とす</div>
+    </div>
+    <audio id="bgm" src="bgm.wav loop></audio>  <!-- 音楽ファイルの追加 -->
+    <script src="game.js"></script>
+</body>
+</html>
