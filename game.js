@@ -5,21 +5,21 @@ const readyElement = document.getElementById('ready');
 const bgm = document.getElementById('bgm');  // BGMの要素を取得
 
 const fruitImages = {
-    watermelon: 'watermelon.png',
-    cherry: 'cherry.png',
-    strawberry: 'strawberry.png',
-    grape: 'grape.png',
-    pomelo: 'pomelo.png',
-    persimmon: 'persimmon.png',
-    apple: 'apple.png',
-    pear: 'pear.png',
-    peach: 'peach.png',
-    pineapple: 'pineapple.png',
-    melon: 'melon.png',
+    watermelon: '11.svg',
+    cherry: '1.svg',
+    strawberry: '2.svg',
+    grape: '3.svg',
+    pomelo: '4.svg',
+    persimmon: '5.svg',
+    apple: '6.svg',
+    pear: '7.svg',
+    peach: '8.svg',
+    pineapple: '9.svg',
+    melon: '10.svg',
 };
 
 const cloudImage = new Image();
-cloudImage.src = 'cloud.png';  // 雲の画像ファイル
+cloudImage.src = '12.svg';  // 雲の画像ファイル
 
 const fruitOrder = [
     'cherry',
