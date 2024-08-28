@@ -1,1 +1,1 @@
-chatgpt.com
+https://chatgpt.com
