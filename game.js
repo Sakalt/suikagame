@@ -22,17 +22,17 @@ const cloudImage = new Image();
 cloudImage.src = '12.svg'; // 雲の画像ファイル
 
 const fruitOrder = [
-    'cherry',
-    'strawberry',
-    'grape',
-    'pomelo',
-    'persimmon',
-    'apple',
-    'pear',
-    'peach',
-    'pineapple',
-    'melon',
-    'watermelon'
+    'cherry',      // 1: 自然出現の最初の果物
+    'strawberry',  // 2
+    'grape',       // 3
+    'pomelo',      // 4
+    'persimmon',   // 5: 自然出現の最後の果物
+    'apple',       // 6
+    'pear',        // 7
+    'peach',       // 8
+    'pineapple',   // 9
+    'melon',       // 10
+    'watermelon'   // 11: ダブルスイカ→サクランボの処理
 ];
 
 let fruitWidth = 60, fruitHeight = 60;
@@ -84,9 +84,10 @@ function createNewFruits() {
             img: new Image(),
             x: Math.random() * (canvas.width - fruitWidth),
             y: Math.random() * (canvas.height - fruitHeight),
-            velocityY: Math.random() * 2 + 1
+            velocityY: Math.random() * 2 + 1,
+            type: Math.floor(Math.random() * 5) // 0〜4の自然出現する果物のインデックス
         };
-        fruit.img.src = fruitImages[fruitOrder[Math.floor(Math.random() * fruitOrder.length)]];
+        fruit.img.src = fruitImages[fruitOrder[fruit.type]];
         fruitList.push(fruit);
     }
     drawFruit();
@@ -102,7 +103,52 @@ function updatePhysics() {
         }
     });
 
+    handleCollisions();
     drawFruit();
+}
+
+function handleCollisions() {
+    for (let i = 0; i < fruitList.length; i++) {
+        for (let j = i + 1; j < fruitList.length; j++) {
+            const fruitA = fruitList[i];
+            const fruitB = fruitList[j];
+
+            if (isColliding(fruitA, fruitB)) {
+                if (fruitA.type === fruitB.type) {
+                    // 同じ果物がぶつかった場合: 合体
+                    fruitB.type = Math.min(fruitB.type + 1, fruitOrder.length - 1);
+                    fruitB.img.src = fruitImages[fruitOrder[fruitB.type]];
+
+                    // スイカが2つぶつかったら「サクランボ」に戻る
+                    if (fruitA.type === 10) { // スイカ
+                        fruitB.type = 0; // サクランボ
+                        fruitB.img.src = fruitImages[fruitOrder[0]];
+                    }
+
+                    // 合体後のフルーツを消す
+                    fruitList.splice(i, 1);
+                    updateScore();
+                } else {
+                    // 異なる果物がぶつかった場合: 跳ね返る
+                    bounceOff(fruitA, fruitB);
+                }
+            }
+        }
+    }
+}
+
+function isColliding(fruitA, fruitB) {
+    const dx = fruitA.x - fruitB.x;
+    const dy = fruitA.y - fruitB.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < fruitWidth;
+}
+
+function bounceOff(fruitA, fruitB) {
+    // 簡単な跳ね返りの処理
+    const tempVelocityY = fruitA.velocityY;
+    fruitA.velocityY = fruitB.velocityY;
+    fruitB.velocityY = tempVelocityY;
 }
 
 function checkGameOver() {
@@ -174,9 +220,10 @@ function setupListeners() {
                 img: new Image(),
                 x: canvas.width / 2 - fruitWidth / 2,
                 y: 0,
-                velocityY: 0
+                velocityY: 0,
+                type: Math.floor(Math.random() * 5) // 自然出現の果物
             };
-            activeFruit.img.src = fruitImages[fruitOrder[Math.floor(Math.random() * fruitOrder.length)]];
+            activeFruit.img.src = fruitImages[fruitOrder[activeFruit.type]];
         }
         drawFruit();
     });
