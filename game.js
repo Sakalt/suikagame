@@ -37,7 +37,7 @@ const fruitOrder = [
 
 function getFruitSize(type) {
     const baseSize = 60; // 基本のサイズ
-    const sizeMultiplier = 1 + type * 0.1; // タイプに基づくサイズの増加
+    const sizeMultiplier = 1 + type * 0.25; // タイプに基づくサイズの増加
     return baseSize * sizeMultiplier;
 }
 
