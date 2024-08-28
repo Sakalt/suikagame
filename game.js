@@ -86,15 +86,16 @@ function createNewFruits() {
 
     for (let i = 0; i < numFruits; i++) {
         let type = Math.floor(Math.random() * fruitOrder.length);
+        let fruitSize = getFruitSize(type);
         let fruit = {
             img: new Image(),
-            x: Math.random() * (canvas.width - getFruitSize(type)),
-            y: Math.random() * (canvas.height - getFruitSize(type)),
+            x: Math.random() * (canvas.width - fruitSize),
+            y: Math.random() * (canvas.height - fruitSize),
             velocityY: Math.random() * 2 + 1,
             velocityX: (Math.random() - 0.5) * 2, // X方向の初速
             type: type,
-            width: getFruitSize(type),
-            height: getFruitSize(type)
+            width: fruitSize,
+            height: fruitSize
         };
         fruit.img.src = fruitImages[fruitOrder[fruit.type]];
         fruitList.push(fruit);
@@ -145,7 +146,7 @@ function handleCollisions() {
                         fruitB.type = 0; // サクランボ
                         fruitB.img.src = fruitImages[fruitOrder[0]];
                         fruitB.width = getFruitSize(fruitB.type);
-                        fruitB.height = getFruitSize(fruitB.type)];
+                        fruitB.height = getFruitSize(fruitB.type);
                     }
 
                     // 合体後のフルーツを消す
@@ -195,7 +196,7 @@ function gameOver() {
 function startGame() {
     score = 0;
     scoreElement.textContent = `スコア: ${score} (最高: ${maxScore})`;
-    readyElement.style.display = 'none';
+    readyElement.style.display = 'none'; // `Ready!` メッセージを隠す
     createNewFruits();
     bgm.play();
     gameInterval = setInterval(() => {
@@ -239,15 +240,16 @@ function setupListeners() {
         const y = event.clientY - rect.top;
 
         if (!activeFruit) {
+            let type = Math.floor(Math.random() * fruitOrder.length); // 自然出現の果物
             activeFruit = {
                 img: new Image(),
-                x: canvas.width / 2 - getFruitSize(0) / 2,
+                x: canvas.width / 2 - getFruitSize(type) / 2,
                 y: 0,
                 velocityY: 0,
                 velocityX: 0,
-                type: Math.floor(Math.random() * fruitOrder.length), // 自然出現の果物
-                width: getFruitSize(0),
-                height: getFruitSize(0)
+                type: type,
+                width: getFruitSize(type),
+                height: getFruitSize(type)
             };
             activeFruit.img.src = fruitImages[fruitOrder[activeFruit.type]];
         }
