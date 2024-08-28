@@ -257,6 +257,6 @@ function setupListeners() {
 
 window.onload = () => {
     readyElement.style.display = 'block';
-    setTimeout(startGame, 3000);
+    setTimeout(startGame, 32);
     setupListeners();
 };
