@@ -86,16 +86,15 @@ function createNewFruits() {
 
     for (let i = 0; i < numFruits; i++) {
         let type = Math.floor(Math.random() * fruitOrder.length);
-        let fruitSize = getFruitSize(type);
         let fruit = {
             img: new Image(),
-            x: Math.random() * (canvas.width - fruitSize),
-            y: Math.random() * (canvas.height - fruitSize),
+            x: Math.random() * (canvas.width - getFruitSize(type)),
+            y: Math.random() * (canvas.height - getFruitSize(type)),
             velocityY: Math.random() * 2 + 1,
             velocityX: (Math.random() - 0.5) * 2, // X方向の初速
             type: type,
-            width: fruitSize,
-            height: fruitSize
+            width: getFruitSize(type),
+            height: getFruitSize(type)
         };
         fruit.img.src = fruitImages[fruitOrder[fruit.type]];
         fruitList.push(fruit);
@@ -170,91 +169,70 @@ function isColliding(fruitA, fruitB) {
 
 function bounceOff(fruitA, fruitB) {
     // 簡単な跳ね返りの処理
-    const tempVelocityX = fruitA.velocityX;
-    fruitA.velocityX = fruitB.velocityX;
-    fruitB.velocityX = tempVelocityX;
+    [fruitA.velocityX, fruitB.velocityX] = [fruitB.velocityX, fruitA.velocityX];
+    [fruitA.velocityY, fruitB.velocityY] = [fruitB.velocityY, fruitA.velocityY];
 }
 
 function checkGameOver() {
     let gameOver = fruitList.some(fruit => fruit.y + fruit.height > canvas.height);
     if (gameOver) {
-        gameOver();
+        endGame();
     }
 }
 
-function gameOver() {
+function endGame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = '48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('ゲームオーバー', canvas.width / 2, canvas.height / 2 - 20);
-    ctx.font = '24px Arial';
-    ctx.fillText(`最終スコア: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+    ctx.font = '30px Arial';
+    ctx.fillStyle = 'red';
+    ctx.fillText('ゲームオーバー', 120, 250);
     clearInterval(gameInterval);
     bgm.pause();
 }
 
 function startGame() {
     score = 0;
-    scoreElement.textContent = `スコア: ${score} (最高: ${maxScore})`;
-    readyElement.style.display = 'none'; // `Ready!` メッセージを隠す
-    createNewFruits();
+    updateScore();
+    readyElement.style.display = 'none';
     bgm.play();
-    gameInterval = setInterval(() => {
-        updatePhysics();
-        checkGameOver();
-    }, 100);
+    createNewFruits();
+    gameInterval = setInterval(updatePhysics, 1000 / 60);
+}
+
+function moveLeft() {
+    if (activeFruit) {
+        activeFruit.x -= 10;
+        if (activeFruit.x < 0) activeFruit.x = 0;
+        drawFruit();
+    }
+}
+
+function moveRight() {
+    if (activeFruit) {
+        activeFruit.x += 10;
+        if (activeFruit.x + activeFruit.width > canvas.width) activeFruit.x = canvas.width - activeFruit.width;
+        drawFruit();
+    }
+}
+
+function dropFruit() {
+    if (!activeFruit) {
+        activeFruit = {
+            img: new Image(),
+            x: canvas.width / 2 - 30,
+            y: 0,
+            velocityY: 3,
+            type: Math.floor(Math.random() * fruitOrder.length),
+            width: 60,
+            height: 60
+        };
+        activeFruit.img.src = fruitImages[fruitOrder[activeFruit.type]];
+    }
 }
 
 function setupListeners() {
-    document.getElementById('left').addEventListener('click', () => {
-        if (activeFruit) {
-            activeFruit.x -= 10;
-            if (activeFruit.x < 0) {
-                activeFruit.x = 0;
-            }
-            drawFruit();
-        }
-    });
-
-    document.getElementById('right').addEventListener('click', () => {
-        if (activeFruit) {
-            activeFruit.x += 10;
-            if (activeFruit.x + activeFruit.width > canvas.width) {
-                activeFruit.x = canvas.width - activeFruit.width;
-            }
-            drawFruit();
-        }
-    });
-
-    document.getElementById('drop').addEventListener('click', () => {
-        if (activeFruit) {
-            fruitList.push(activeFruit);
-            activeFruit = null;
-            drawFruit();
-        }
-    });
-
-    canvas.addEventListener('click', (event) => {
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-
-        if (!activeFruit) {
-            let type = Math.floor(Math.random() * fruitOrder.length); // 自然出現の果物
-            activeFruit = {
-                img: new Image(),
-                x: canvas.width / 2 - getFruitSize(type) / 2,
-                y: 0,
-                velocityY: 0,
-                velocityX: 0,
-                type: type,
-                width: getFruitSize(type),
-                height: getFruitSize(type)
-            };
-            activeFruit.img.src = fruitImages[fruitOrder[activeFruit.type]];
-        }
-        drawFruit();
-    });
+    document.getElementById('left').addEventListener('click', moveLeft);
+    document.getElementById('right').addEventListener('click', moveRight);
+    document.getElementById('drop').addEventListener('click', dropFruit);
 }
 
 window.onload = () => {
