@@ -35,7 +35,12 @@ const fruitOrder = [
     'watermelon'   // 11: ダブルスイカ→サクランボの処理
 ];
 
-let fruitWidth = 60, fruitHeight = 60;
+function getFruitSize(type) {
+    const baseSize = 60; // 基本のサイズ
+    const sizeMultiplier = 1 + type * 0.1; // タイプに基づくサイズの増加
+    return baseSize * sizeMultiplier;
+}
+
 let score = 0;
 let maxScore = localStorage.getItem('maxScore') || 0;
 let fruitList = [];
@@ -52,17 +57,17 @@ function drawFruit() {
     drawCloud();
 
     fruitList.forEach(fruit => {
-        ctx.drawImage(fruit.img, fruit.x, fruit.y, fruitWidth, fruitHeight);
+        ctx.drawImage(fruit.img, fruit.x, fruit.y, fruit.width, fruit.height);
         ctx.strokeStyle = 'yellow'; 
         ctx.lineWidth = 2; 
-        ctx.strokeRect(fruit.x, fruit.y, fruitWidth, fruitHeight); 
+        ctx.strokeRect(fruit.x, fruit.y, fruit.width, fruit.height); 
     });
 
     if (activeFruit) {
-        ctx.drawImage(activeFruit.img, activeFruit.x, activeFruit.y, fruitWidth, fruitHeight);
+        ctx.drawImage(activeFruit.img, activeFruit.x, activeFruit.y, activeFruit.width, activeFruit.height);
         ctx.strokeStyle = 'yellow';  
         ctx.lineWidth = 2;  
-        ctx.strokeRect(activeFruit.x, activeFruit.y, fruitWidth, fruitHeight);
+        ctx.strokeRect(activeFruit.x, activeFruit.y, activeFruit.width, activeFruit.height);
     }
 }
 
@@ -80,12 +85,16 @@ function createNewFruits() {
     let numFruits = 10;
 
     for (let i = 0; i < numFruits; i++) {
+        let type = Math.floor(Math.random() * fruitOrder.length);
         let fruit = {
             img: new Image(),
-            x: Math.random() * (canvas.width - fruitWidth),
-            y: Math.random() * (canvas.height - fruitHeight),
+            x: Math.random() * (canvas.width - getFruitSize(type)),
+            y: Math.random() * (canvas.height - getFruitSize(type)),
             velocityY: Math.random() * 2 + 1,
-            type: Math.floor(Math.random() * 5) // 0〜4の自然出現する果物のインデックス
+            velocityX: (Math.random() - 0.5) * 2, // X方向の初速
+            type: type,
+            width: getFruitSize(type),
+            height: getFruitSize(type)
         };
         fruit.img.src = fruitImages[fruitOrder[fruit.type]];
         fruitList.push(fruit);
@@ -96,9 +105,19 @@ function createNewFruits() {
 function updatePhysics() {
     fruitList.forEach(fruit => {
         fruit.y += fruit.velocityY;
+        fruit.x += fruit.velocityX;
 
-        if (fruit.y + fruitHeight > canvas.height) {
-            fruit.y = canvas.height - fruitHeight;
+        // 画面の端に当たったときの処理
+        if (fruit.x < 0) {
+            fruit.x = 0;
+            fruit.velocityX = Math.abs(fruit.velocityX);
+        } else if (fruit.x + fruit.width > canvas.width) {
+            fruit.x = canvas.width - fruit.width;
+            fruit.velocityX = -Math.abs(fruit.velocityX);
+        }
+
+        if (fruit.y + fruit.height > canvas.height) {
+            fruit.y = canvas.height - fruit.height;
             fruit.velocityY = 0;
         }
     });
@@ -118,11 +137,15 @@ function handleCollisions() {
                     // 同じ果物がぶつかった場合: 合体
                     fruitB.type = Math.min(fruitB.type + 1, fruitOrder.length - 1);
                     fruitB.img.src = fruitImages[fruitOrder[fruitB.type]];
+                    fruitB.width = getFruitSize(fruitB.type);
+                    fruitB.height = getFruitSize(fruitB.type);
 
                     // スイカが2つぶつかったら「サクランボ」に戻る
                     if (fruitA.type === 10) { // スイカ
                         fruitB.type = 0; // サクランボ
                         fruitB.img.src = fruitImages[fruitOrder[0]];
+                        fruitB.width = getFruitSize(fruitB.type);
+                        fruitB.height = getFruitSize(fruitB.type)];
                     }
 
                     // 合体後のフルーツを消す
@@ -141,18 +164,18 @@ function isColliding(fruitA, fruitB) {
     const dx = fruitA.x - fruitB.x;
     const dy = fruitA.y - fruitB.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < fruitWidth;
+    return distance < (fruitA.width + fruitB.width) / 2;
 }
 
 function bounceOff(fruitA, fruitB) {
     // 簡単な跳ね返りの処理
-    const tempVelocityY = fruitA.velocityY;
-    fruitA.velocityY = fruitB.velocityY;
-    fruitB.velocityY = tempVelocityY;
+    const tempVelocityX = fruitA.velocityX;
+    fruitA.velocityX = fruitB.velocityX;
+    fruitB.velocityX = tempVelocityX;
 }
 
 function checkGameOver() {
-    let gameOver = fruitList.some(fruit => fruit.y + fruitHeight > canvas.height);
+    let gameOver = fruitList.some(fruit => fruit.y + fruit.height > canvas.height);
     if (gameOver) {
         gameOver();
     }
@@ -195,8 +218,8 @@ function setupListeners() {
     document.getElementById('right').addEventListener('click', () => {
         if (activeFruit) {
             activeFruit.x += 10;
-            if (activeFruit.x + fruitWidth > canvas.width) {
-                activeFruit.x = canvas.width - fruitWidth;
+            if (activeFruit.x + activeFruit.width > canvas.width) {
+                activeFruit.x = canvas.width - activeFruit.width;
             }
             drawFruit();
         }
@@ -218,10 +241,13 @@ function setupListeners() {
         if (!activeFruit) {
             activeFruit = {
                 img: new Image(),
-                x: canvas.width / 2 - fruitWidth / 2,
+                x: canvas.width / 2 - getFruitSize(0) / 2,
                 y: 0,
                 velocityY: 0,
-                type: Math.floor(Math.random() * 5) // 自然出現の果物
+                velocityX: 0,
+                type: Math.floor(Math.random() * fruitOrder.length), // 自然出現の果物
+                width: getFruitSize(0),
+                height: getFruitSize(0)
             };
             activeFruit.img.src = fruitImages[fruitOrder[activeFruit.type]];
         }
