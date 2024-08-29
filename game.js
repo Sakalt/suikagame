@@ -22,17 +22,17 @@ const cloudImage = new Image();
 cloudImage.src = '12.svg'; // 雲の画像ファイル
 
 const fruitOrder = [
-    'cherry',      // 1: 自然出現の最初の果物
-    'strawberry',  // 2
-    'grape',       // 3
-    'pomelo',      // 4
-    'persimmon',   // 5: 自然出現の最後の果物
-    'apple',       // 6
-    'pear',        // 7
-    'peach',       // 8
-    'pineapple',   // 9
-    'melon',       // 10
-    'watermelon'   // 11: ダブルスイカ→サクランボの処理
+    'cherry',
+    'strawberry',
+    'grape',
+    'pomelo',
+    'persimmon',
+    'apple',
+    'pear',
+    'peach',
+    'pineapple',
+    'melon',
+    'watermelon'
 ];
 
 function getFruitSize(type) {
@@ -46,10 +46,9 @@ let maxScore = localStorage.getItem('maxScore') || 0;
 let fruitList = [];
 let activeFruit = null;
 let gameInterval;
-let cloud = { x: canvas.width / 2 - 75, y: 50, width: 150, height: 80 }; // 雲の位置とサイズ
 
 function drawCloud() {
-    ctx.drawImage(cloudImage, cloud.x, cloud.y, cloud.width, cloud.height);
+    ctx.drawImage(cloudImage, canvas.width / 2 - 75, 50, 150, 80); 
 }
 
 function drawFruit() {
@@ -58,15 +57,15 @@ function drawFruit() {
 
     fruitList.forEach(fruit => {
         ctx.drawImage(fruit.img, fruit.x, fruit.y, fruit.width, fruit.height);
-        ctx.strokeStyle = 'yellow';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(fruit.x, fruit.y, fruit.width, fruit.height);
+        ctx.strokeStyle = 'yellow'; 
+        ctx.lineWidth = 2; 
+        ctx.strokeRect(fruit.x, fruit.y, fruit.width, fruit.height); 
     });
 
     if (activeFruit) {
         ctx.drawImage(activeFruit.img, activeFruit.x, activeFruit.y, activeFruit.width, activeFruit.height);
-        ctx.strokeStyle = 'yellow';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'yellow';  
+        ctx.lineWidth = 2;  
         ctx.strokeRect(activeFruit.x, activeFruit.y, activeFruit.width, activeFruit.height);
     }
 }
@@ -80,26 +79,20 @@ function updateScore() {
     scoreElement.textContent = `スコア: ${score} (最高: ${maxScore})`;
 }
 
-function createNewFruits() {
-    fruitList = [];
-    let numFruits = 10;
-
-    for (let i = 0; i < numFruits; i++) {
-        let type = Math.floor(Math.random() * fruitOrder.length);
-        let fruit = {
-            img: new Image(),
-            x: Math.random() * (canvas.width - getFruitSize(type)),
-            y: Math.random() * (canvas.height - getFruitSize(type)),
-            velocityY: Math.random() * 2 + 1,
-            velocityX: (Math.random() - 0.5) * 2, // X方向の初速
-            type: type,
-            width: getFruitSize(type),
-            height: getFruitSize(type)
-        };
-        fruit.img.src = fruitImages[fruitOrder[fruit.type]];
-        fruitList.push(fruit);
-    }
-    drawFruit();
+function createNewFruit() {
+    let type = Math.floor(Math.random() * fruitOrder.length);
+    let fruit = {
+        img: new Image(),
+        x: canvas.width / 2 - getFruitSize(type) / 2, // 雲の位置に生成
+        y: 60, // 雲の下に配置
+        velocityY: 0,
+        velocityX: 0, 
+        type: type,
+        width: getFruitSize(type),
+        height: getFruitSize(type)
+    };
+    fruit.img.src = fruitImages[fruitOrder[fruit.type]];
+    activeFruit = fruit; // 新しく生成された果物を操作可能に
 }
 
 function updatePhysics() {
@@ -107,7 +100,6 @@ function updatePhysics() {
         fruit.y += fruit.velocityY;
         fruit.x += fruit.velocityX;
 
-        // 画面の端に当たったときの処理
         if (fruit.x < 0) {
             fruit.x = 0;
             fruit.velocityX = Math.abs(fruit.velocityX);
@@ -134,25 +126,21 @@ function handleCollisions() {
 
             if (isColliding(fruitA, fruitB)) {
                 if (fruitA.type === fruitB.type) {
-                    // 同じ果物がぶつかった場合: 合体
                     fruitB.type = Math.min(fruitB.type + 1, fruitOrder.length - 1);
                     fruitB.img.src = fruitImages[fruitOrder[fruitB.type]];
                     fruitB.width = getFruitSize(fruitB.type);
                     fruitB.height = getFruitSize(fruitB.type);
 
-                    // スイカが2つぶつかったら「サクランボ」に戻る
-                    if (fruitA.type === 10) { // スイカ
-                        fruitB.type = 0; // サクランボ
+                    if (fruitA.type === 10) {
+                        fruitB.type = 0;
                         fruitB.img.src = fruitImages[fruitOrder[0]];
                         fruitB.width = getFruitSize(fruitB.type);
-                        fruitB.height = getFruitSize(fruitB.type)];
+                        fruitB.height = getFruitSize(fruitB.type);
                     }
 
-                    // 合体後のフルーツを消す
                     fruitList.splice(i, 1);
                     updateScore();
                 } else {
-                    // 異なる果物がぶつかった場合: 跳ね返る
                     bounceOff(fruitA, fruitB);
                 }
             }
@@ -168,16 +156,12 @@ function isColliding(fruitA, fruitB) {
 }
 
 function bounceOff(fruitA, fruitB) {
-    // 簡単な跳ね返りの処理
     const tempVelocityX = fruitA.velocityX;
     fruitA.velocityX = fruitB.velocityX;
     fruitB.velocityX = tempVelocityX;
 
-    // 強くぶっ飛ぶ可能性の追加
-    if (Math.random() < 0.1) {
-        fruitA.velocityX *= 2;
-        fruitB.velocityX *= 2;
-    }
+    fruitA.velocityX *= Math.random() * 1.5 + 0.5;
+    fruitB.velocityX *= Math.random() * 1.5 + 0.5;
 }
 
 function checkGameOver() {
@@ -202,12 +186,13 @@ function startGame() {
     score = 0;
     scoreElement.textContent = `スコア: ${score} (最高: ${maxScore})`;
     readyElement.style.display = 'none';
-    createNewFruits();
     bgm.play();
     gameInterval = setInterval(() => {
         updatePhysics();
         checkGameOver();
-    }, 100);
+    }, 10); // 0.01秒ごとに物理法則を更新
+
+    createNewFruit(); // ゲーム開始時に最初の果物を生成
 }
 
 function setupListeners() {
@@ -233,14 +218,16 @@ function setupListeners() {
 
     document.getElementById('drop').addEventListener('click', () => {
         if (activeFruit) {
-            activeFruit.y = canvas.height - activeFruit.height; // フルーツを下に置く
-            fruitList.push(activeFruit);
-            activeFruit = null;
-            drawFruit();
+            activeFruit.velocityY = 2; // 落下速度を設定
+            fruitList.push(activeFruit); // 落ちる果物をリストに追加
+            activeFruit = null; // 操作可能な果物をクリア
+            setTimeout(createNewFruit, 1000); // 前の果物が落ちた後に次の果物を生成
         }
     });
-
-    setTimeout(startGame, 3000); // 3秒後にゲーム開始
 }
 
-setupListeners();
+window.onload = () => {
+    readyElement.style.display = 'block';
+    setTimeout(startGame, 3000);
+    setupListeners();
+};
