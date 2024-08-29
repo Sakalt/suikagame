@@ -37,7 +37,7 @@ const fruitOrder = [
 
 function getFruitSize(type) {
     const baseSize = 60; // 基本のサイズ
-    const sizeMultiplier = 1 + type * 0.1; // タイプに基づくサイズの増加
+    const sizeMultiplier = 1 + type * 0.25; // タイプに基づくサイズの増加倍率を0.25に設定
     return baseSize * sizeMultiplier;
 }
 
@@ -174,7 +174,8 @@ function bounceOff(fruitA, fruitB) {
 }
 
 function checkGameOver() {
-    let gameOver = fruitList.some(fruit => fruit.y + fruit.height > canvas.height);
+    // 果物が画面の上端に到達したらゲームオーバー
+    let gameOver = fruitList.some(fruit => fruit.y <= 0 || fruit.y + fruit.height > canvas.height);
     if (gameOver) {
         endGame();
     }
