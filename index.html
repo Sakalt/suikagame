@@ -49,6 +49,190 @@
         <button id="right" class="button">右 →</button>
     </div>
     <audio id="bgm" src="bgm.mp3" loop></audio>
-    <script src="game.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.17.1/matter.min.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const readyElement = document.getElementById('ready');
+        const bgm = document.getElementById('bgm');
+
+        const engine = Matter.Engine.create();
+        const world = engine.world;
+
+        const fruitImages = {
+            watermelon: '11.svg',
+            cherry: '1.svg',
+            strawberry: '2.svg',
+            grape: '3.svg',
+            pomelo: '4.svg',
+            persimmon: '5.svg',
+            apple: '6.svg',
+            pear: '7.svg',
+            peach: '8.svg',
+            pineapple: '9.svg',
+            melon: '10.svg'
+        };
+
+        const fruitOrder = [
+            'cherry',
+            'strawberry',
+            'grape',
+            'pomelo',
+            'persimmon',
+            'apple',
+            'pear',
+            'peach',
+            'pineapple',
+            'melon',
+            'watermelon'
+        ];
+
+        let score = 0;
+        let maxScore = localStorage.getItem('maxScore') || 0;
+        let fruitList = [];
+        let activeFruit = null;
+
+        function getFruitSize(type) {
+            const baseSize = 60; 
+            const sizeMultiplier = 1 + type * 0.25; 
+            return baseSize * sizeMultiplier;
+        }
+
+        function createNewFruit() {
+            let type = Math.floor(Math.random() * fruitOrder.length);
+            const width = getFruitSize(type);
+            const height = getFruitSize(type);
+            const x = canvas.width / 2 - width / 2;
+            const y = 0;
+
+            const fruit = Matter.Bodies.rectangle(x, y, width, height, {
+                restitution: 0.5,
+                render: {
+                    sprite: {
+                        texture: fruitImages[fruitOrder[type]],
+                        xScale: width / 60,
+                        yScale: height / 60
+                    }
+                }
+            });
+
+            Matter.World.add(world, fruit);
+            fruitList.push(fruit);
+            drawFruit();
+        }
+
+        function drawFruit() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            Matter.Render.world(engine);
+        }
+
+        function updateScore() {
+            score++;
+            if (score > maxScore) {
+                maxScore = score;
+                localStorage.setItem('maxScore', maxScore);
+            }
+            scoreElement.textContent = `スコア: ${score} (最高: ${maxScore})`;
+        }
+
+        function handleCollisions() {
+            for (let i = 0; i < fruitList.length; i++) {
+                for (let j = i + 1; j < fruitList.length; j++) {
+                    const fruitA = fruitList[i];
+                    const fruitB = fruitList[j];
+
+                    if (Matter.SAT.collides(fruitA, fruitB).collided) {
+                        if (fruitA.type === fruitB.type) {
+                            fruitB.type = Math.min(fruitB.type + 1, fruitOrder.length - 1);
+                            updateScore();
+                            Matter.World.remove(world, fruitA);
+                            fruitList.splice(i, 1);
+                        } else {
+                            bounceOff(fruitA, fruitB);
+                        }
+                    }
+                }
+            }
+        }
+
+        function bounceOff(fruitA, fruitB) {
+            // Matter.jsにおける反発処理
+            const vA = fruitA.velocity;
+            const vB = fruitB.velocity;
+
+            Matter.Body.setVelocity(fruitA, { x: vB.x, y: vB.y });
+            Matter.Body.setVelocity(fruitB, { x: vA.x, y: vA.y });
+        }
+
+        function checkGameOver() {
+            if (fruitList.some(fruit => fruit.position.y <= 0)) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('ゲームオーバー', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.font = '24px Arial';
+            ctx.fillText(`最終スコア: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+            Matter.Engine.clear(engine);
+            bgm.pause();
+        }
+
+        function startGame() {
+            score = 0;
+            scoreElement.textContent = `スコア: ${score} (最高: ${maxScore})`;
+            readyElement.style.display = 'none';
+            createNewFruit();
+            bgm.play();
+
+            Matter.Engine.run(engine);
+            setInterval(() => {
+                drawFruit();
+                handleCollisions();
+                checkGameOver();
+            }, 1000 / 60);
+        }
+
+        function setupListeners() {
+            document.getElementById('left').addEventListener('click', () => {
+                if (fruitList.length > 0) {
+                    const fruit = fruitList[fruitList.length - 1];
+                    Matter.Body.translate(fruit, { x: -10, y: 0 });
+                }
+            });
+
+            document.getElementById('right').addEventListener('click', () => {
+                if (fruitList.length > 0) {
+                    const fruit = fruitList[fruitList.length - 1];
+                    Matter.Body.translate(fruit, { x: 10, y: 0 });
+                }
+            });
+
+            document.getElementById('drop').addEventListener('click', () => {
+                if (fruitList.length > 0) {
+                    const fruit = fruitList[fruitList.length - 1];
+                    Matter.Body.setVelocity(fruit, { x: 0, y: 3 });
+                }
+                setTimeout(createNewFruit, 1000);
+            });
+
+            canvas.addEventListener('click', () => {
+                if (fruitList.length === 0) {
+                    createNewFruit();
+                }
+                drawFruit();
+            });
+        }
+
+        window.onload = () => {
+            readyElement.style.display = 'block';
+            setTimeout(startGame, 3000);
+            setupListeners();
+        };
+    </script>
 </body>
 </html>
