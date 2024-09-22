@@ -103,7 +103,7 @@
             let type = Math.floor(Math.random() * fruitOrder.length);
             const width = getFruitSize(type);
             const height = getFruitSize(type);
-            const x = canvas.width / 2 - width / 2;
+            const x = Math.random() * (canvas.width - width);
             const y = 0;
 
             const fruit = Matter.Bodies.rectangle(x, y, width, height, {
@@ -157,7 +157,6 @@
         }
 
         function bounceOff(fruitA, fruitB) {
-            // Matter.jsにおける反発処理
             const vA = fruitA.velocity;
             const vB = fruitB.velocity;
 
@@ -166,7 +165,7 @@
         }
 
         function checkGameOver() {
-            if (fruitList.some(fruit => fruit.position.y <= 0)) {
+            if (fruitList.some(fruit => fruit.position.y >= canvas.height)) {
                 endGame();
             }
         }
@@ -215,7 +214,7 @@
             document.getElementById('drop').addEventListener('click', () => {
                 if (fruitList.length > 0) {
                     const fruit = fruitList[fruitList.length - 1];
-                    Matter.Body.setVelocity(fruit, { x: 0, y: 3 });
+                    Matter.Body.setVelocity(fruit, { x: 0, y: 5 });
                 }
                 setTimeout(createNewFruit, 1000);
             });
